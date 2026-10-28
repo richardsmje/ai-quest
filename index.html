@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI Quest: Be a Smart AI User</title>
+<style>
+:root{--bg:#f6f4ff;--card:#fff;--ink:#1d1b2e;--mut:#6b6880;--pri:#6c4cf5;--ok:#1f9d55;--line:#e3dffa;--box:#f0edff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15131f;--card:#201d30;--ink:#f2f0ff;--mut:#a9a5c4;--pri:#9a82ff;--ok:#43c77b;--line:#35304f;--box:#2a2640;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#15131f;--card:#201d30;--ink:#f2f0ff;--mut:#a9a5c4;--pri:#9a82ff;--ok:#43c77b;--line:#35304f;--box:#2a2640;color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI","Hiragino Sans",sans-serif;line-height:1.5}
+main{max-width:720px;margin:0 auto;padding:16px}
+h1{font-size:1.6rem;margin:8px 0 4px}
+.sub{color:var(--mut);margin:0 0 12px}
+.bar{height:12px;background:var(--line);border-radius:9px;overflow:hidden;margin:8px 0 16px}
+.bar i{display:block;height:100%;background:var(--pri);width:0;transition:width .4s}
+.card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:12px}
+.card.locked{opacity:.55}
+.card.done{border-color:var(--ok)}
+.head{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.1rem}
+.head small{margin-left:auto;color:var(--mut);font-weight:500}
+.goal{margin:10px 0 0;font-weight:700}
+ol{padding-left:22px;margin:8px 0}
+.pbox{background:var(--box);border-radius:10px;padding:10px;font-family:ui-monospace,Menlo,monospace;font-size:.9rem;white-space:pre-wrap;margin:8px 0}
+.pbox.plain{font-family:inherit;font-size:1.05rem}
+button,.lnk{font:inherit;border:0;border-radius:10px;padding:9px 14px;background:var(--pri);color:#fff;cursor:pointer;text-decoration:none;display:inline-block;margin:4px 6px 4px 0;font-weight:600}
+button.alt{background:var(--box);color:var(--ink)}
+button:disabled{opacity:.4;cursor:not-allowed}
+label{display:block;padding:6px 0;cursor:pointer}
+.fq{margin:10px 0}
+.in{display:block;width:100%;font:inherit;padding:8px 10px;border:2px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);margin:4px 0 6px}
+.hint{display:none;background:var(--box);border-radius:10px;padding:8px 10px;margin:6px 0}
+.hint.show{display:block}
+.badge{text-align:center;font-size:1.4rem;font-weight:800;padding:16px}
+</style>
+</head>
+<body>
+<main>
+<h1>🤖 AI Quest</h1>
+<p class="sub">Work in pairs. Finish each mission to unlock the next one. AI is your tutor, not your answer machine!<br><b>English only!</b> Type to the AI in English. The AI will not answer if you write Japanese.</p>
+<div class="bar"><i id="bar"></i></div>
+<div id="app"></div>
+<p class="sub">Tip: Open ChatGPT in a new tab. You do not need to log in.</p>
+</main>
+<script>
+var RULE=" Rule: Reply only in English. If I use Japanese, say: Please use English!";
+var TXT="Last Halloween night, Emma walked home alone through an old forest. The moon was hidden behind dark clouds, and the wind made strange sounds. Suddenly, she saw a tiny light inside an abandoned house. She felt nervous, but she was curious, so she opened the rusty gate. Inside, a black cat was sitting on a chair. It looked at her and slowly said, “You are late. Everyone has been waiting for you.” Emma screamed and ran away. She never walked through that forest again.";
+var CH=function(v){return v!=="Choose one"};
+var Q=[
+{e:"🎤",t:"Guess the Character",m:8,g:"Find out the AI’s secret character.",
+s:["Copy the prompt. Paste it into ChatGPT. The AI picks a secret character.","Ask yes/no questions out loud, then type them. You have 10 questions.","Type the character’s name below."],
+p:"Let us play a guessing game. Secretly choose a famous person or anime character. Do not tell me the name. I will ask yes/no questions to guess who it is. Answer only Yes or No. Use easy English. If I ask for a hint, give me one easy hint. After 10 questions, tell me the answer."+RULE,
+h:"Try: Are you a person? Are you from Japan? Are you in an anime? Can you fly? Are you a boy? Ask for a hint if you are stuck!",
+j:"【やり方】プロンプト（AIへの指示）をコピーして、ChatGPTに貼り付け（paste）よう。AIが秘密のキャラクターを決めます。「はい／いいえ」で答えられる質問をして、誰か当てよう。ヒントがほしいときは Can I have a hint? と送ろう。日本語で書くとAIは答えません。英語で書こう。",
+f:[{l:"Who was the secret character?",ph:"Type the name",ok:function(v){return v.length>1}},{l:"Type one yes/no question you asked.",ph:"Are you ...?",ok:function(v){return v.length>7}}]},
+{e:"🎃",t:"Spooky Story",m:8,g:"Listen to a Halloween story. Answer 4 questions.",speak:1,pa:1,
+s:["Press ▶ Listen. Listen two times.","Answer the 4 questions.","Do not know a word? Copy the prompt and ask the AI."],
+p:"Explain the word ___ in easy English. Give one example sentence."+RULE,
+h:"Hint: Listen for the place, the animal, and the feeling words. Hard words: abandoned, rusty, curious.",
+j:"【やり方】▶ Listen を押して、お話を2回聞こう。質問は4つです。わからない単語は、プロンプトの ___ に単語を入れてAIに聞こう（例：abandoned）。声は上の選択メニューで変えられます。<br><br>📖 Story: "+TXT,
+f:[{l:"1. Where was Emma walking?",ph:"Type one word",ok:function(v){return /forest|woods/i.test(v)}},
+{l:"2. Who spoke to Emma?",ph:"Type one word",ok:function(v){return /cat/i.test(v)}},
+{l:"3. Why did Emma open the gate?",o:["Choose one","She was brave.","She was curious.","She was lost."],ok:function(v){return v==="She was curious."}},
+{l:"4. What does “abandoned” mean?",o:["Choose one","new and clean","empty and not used","big and beautiful"],ok:function(v){return v==="empty and not used"}}]},
+{e:"🌏",t:"Translation Check",m:7,g:"Can the AI translate well? You are the Japanese expert!",
+s:["Copy the prompt. Paste it into ChatGPT.","Read the 3 Japanese translations. Do they sound right?","Answer the 2 questions below."],
+p:"Translate these 3 sentences into Japanese. Write the Japanese translation.\n1. It is a piece of cake.\n2. Break a leg!\n3. I have butterflies in my stomach.",
+h:"Tip: Does the Japanese sound like real Japanese? Does it have the same meaning?",
+j:"【やり方】プロンプトをコピーして、ChatGPTに貼り付けよう。AIが日本語に訳します。あなたは日本語のプロです！変なところ、意味がちがうところを探そう。そのあと、下の質問2つに答えよう。（word for word＝1語ずつそのまま訳す）",
+f:[{l:"How many translations had mistakes?",o:["Choose one","0","1","2","3"],ok:CH},{l:"Why was the AI wrong? Choose the best answer.",o:["Choose one","It translated word for word.","It did not understand the meaning.","It sounded unnatural.","The AI was not wrong."],ok:CH}]},
+{e:"✍️",t:"Translate and Check",m:8,g:"Translate 3 sentences into English. The AI checks them.",pa:1,
+s:["Read the 3 Japanese sentences. Type your English below.","Press Copy prompt. Paste it into ChatGPT.","Fix your sentences. Then press Check my answer."],
+show:"<b>1.</b> 昨日、私は友達と映画を見に行きました。<br><b>2.</b> 私は将来、先生になりたいです。<br><b>3.</b> もし明日雨が降ったら、家にいます。",
+p:"Type your 3 sentences first. Then press Copy prompt.",
+dyn:function(i){var g=function(j){var e=document.getElementById("f"+i+"_"+j);return(e&&e.value.trim())||"(not typed yet)"};return"Check my English translation. Do not fix it. For each sentence, say Correct or Not correct. If it is not correct, give me one hint in simple Japanese.\nThe Japanese below is only for checking.\n\n1. 昨日、私は友達と映画を見に行きました。\nMy English: "+g(0)+"\n\n2. 私は将来、先生になりたいです。\nMy English: "+g(1)+"\n\n3. もし明日雨が降ったら、家にいます。\nMy English: "+g(2)},
+h:"うまくいかないとき：時制（went / want to / rains）を確認して、AIのヒントをもう一度読もう。",
+j:"【やり方】日本語の文3つを英語にして、下の3つの箱に書こう。次に Copy prompt を押すと、あなたの英語が入ったプロンプトがコピーされます。ChatGPT に貼り付けると、AIが合っているか確認してくれます。まちがいがあったらヒントを見て直そう。AIのヒントは日本語で出ます。最後の質問は、AIが最初に Correct と言った文の数です。",
+f:[{l:"Sentence 1 in English",ph:"Yesterday I ...",ok:function(v){return /movie|film|cinema/i.test(v)}},{l:"Sentence 2 in English",ph:"I want to ...",ok:function(v){return /teacher/i.test(v)}},{l:"Sentence 3 in English",ph:"If it rains ...",ok:function(v){return /rain/i.test(v)}},{l:"How many sentences did the AI say were Correct at first?",o:["Choose one","0","1","2","3"],ok:CH}]},
+{e:"🎙️",t:"Can the AI Hear You?",m:7,g:"Say 3 sentences. Does the AI understand your English?",
+s:["Open Google Translate. Press the 🎤 button. Press Allow.","Say each sentence in English. Look at what the AI typed.","Type what the AI heard below. Then answer the last question."],
+show:"Use this AI website: <a class=\"lnk\" href=\"https://translate.google.com/?sl=en&amp;tl=ja&amp;op=translate\" target=\"_blank\" rel=\"noopener\">Open Google Translate ↗</a>",
+h:"Hint: Speak slowly and clearly. Is the left language English? No 🎤 button? Try the microphone in ChatGPT instead.",
+j:"【やり方】Open Google Translate を押して、左の言語が English になっているか確認しよう。🎤 のマイクボタンを押して、マイクの使用を許可（Allow）します。下の英語の文を言うと、AIが聞き取った文が画面に出ます。その文を下の箱に入力しよう。Match（一致率）が出ます。100%になるまでもう一度やってもOK。マイクボタンが見つからないときは、ChatGPT（chatgpt.com）のマイクボタンも使えます。最後に、AIが完ぺきに聞き取れた文の数を選ぼう。",
+f:[{l:"1. Say: Can I have a glass of water, please?",say:"Can I have a glass of water, please?",ph:"What the AI heard",ok:function(v){return v.length>2}},
+{l:"2. Say: I really like rice and lemon cake.",say:"I really like rice and lemon cake.",ph:"What the AI heard",ok:function(v){return v.length>2}},
+{l:"3. Say: She sells seashells by the seashore.",say:"She sells seashells by the seashore.",ph:"What the AI heard",ok:function(v){return v.length>2}},
+{l:"How many sentences did the AI hear perfectly?",o:["Choose one","0","1","2","3"],ok:CH}]},
+{e:"📰",t:"Read the News",m:7,g:"Read the news about AI. Answer 5 questions.",
+s:["Press Open the news. Read the article.","Tap the dotted words if you need Japanese.","Answer the 5 questions."],
+show:'<a class="lnk" href="news.html" target="_blank" rel="noopener">Open the news ↗</a>',
+h:"Hint: Look for the words work, gym, mistakes, and rules in the article.",
+j:"【やり方】Open the news を押して、記事を読もう。わからない単語は、点線の下線がある単語をタップすると日本語が出ます。読み終わったら、下の質問5つに答えよう。",
+f:[{l:"1. Where should a robot help you?",o:["Choose one","At work (moving boxes)","At the gym (lifting weights)"],ok:function(v){return v==="At work (moving boxes)"}},
+{l:"2. Is English homework a work job or a gym job?",o:["Choose one","Work job","Gym job"],ok:function(v){return v==="Gym job"}},
+{l:"3. Why can AI be bad? Choose the best answer.",o:["Choose one","It never answers.","It makes mistakes but sounds sure.","It is always slow."],ok:function(v){return v==="It makes mistakes but sounds sure."}},
+{l:"4. Write one of the 3 rules for using AI.",ph:"Type one rule",ok:function(v){return /hint|fact|work job|gym job|brain/i.test(v)}},
+{l:"5. Finish the sentence: AI is a ___. You are the boss.",ph:"Type one word",ok:function(v){return /tool/i.test(v)}}]}
+];
+var F={e:"🏆",t:"Smart AI User",m:3,g:"Remember how to use AI well.",
+s:["Tick the 3 rules you will remember."],
+h:"Think: When is AI helpful? When can AI be wrong?",
+j:"【やり方】今日のミッションを思い出して、覚えておきたい3つのルールにチェックを入れよう。ヒントをもらう、大事なことは確かめる、コピーだけでなく英語を学ぶ、が大切です。",
+c:["Ask for hints, not just answers","Check important facts","Learn the English. Do not just copy."]};
+var S={d:[],c:[],v:[]},VN="";
+try{var z=JSON.parse(localStorage.getItem("aiq3"));if(z&&z.d)S=z}catch(e){}
+function save(){try{localStorage.setItem("aiq3",JSON.stringify(S))}catch(e){}}
+function esc(x){return x.replace(/&/g,"&amp;").replace(/</g,"&lt;")}
+function sc(a,b){var n=function(x){return x.toLowerCase().replace(/[^a-z0-9 ]/g,"").split(/\s+/).filter(Boolean)},A=n(a),B=n(b),h=0;A.forEach(function(w){var k=B.indexOf(w);if(k>-1){h++;B.splice(k,1)}});return Math.round(h/A.length*100)}
+function fld(q,i,dn){var v=(S.v&&S.v[i])||[];return'<div>'+q.f.map(function(f,j){var id='f'+i+'_'+j,x=v[j]||'',c,d=dn?' disabled':'';
+ if(f.o)c='<select class="in" id="'+id+'"'+d+'>'+f.o.map(function(o){return'<option'+(o===x?' selected':'')+'>'+esc(o)+'</option>'}).join('')+'</select>';
+ else c='<input class="in" data-say="'+(f.say?1:0)+'" data-i="'+i+'" data-j="'+j+'" id="'+id+'" placeholder="'+esc(f.ph||'')+'" value="'+esc(x).replace(/"/g,'&quot;')+'"'+d+'>';
+ if(f.say)c+='<span id="r'+id+'"></span>';
+ return'<div class="fq"><b>'+esc(f.l)+'</b>'+c+'</div>'}).join('')+'</div>'}
+function card(q,i,fin){
+ var open=i===0||S.d[i-1],dn=S.d[i];
+ var h='<div class="card '+(dn?'done':open?'':'locked')+'"><div class="head"><span>'+(open?q.e:'🔒')+'</span><span>'+(fin?'':'Mission '+(i+1)+': ')+esc(q.t)+(dn?' ✅':'')+'</span><small>'+q.m+' min</small></div>';
+ if(!open)return h+'</div>';
+ h+='<p class="goal">🎯 '+esc(q.g)+'</p><ol>'+q.s.map(function(x){return'<li>'+esc(x)+'</li>'}).join('')+'</ol>';
+ if(q.speak)h+='<select id="vs" class="in" aria-label="Voice"></select><button class="alt" data-a="say">▶ Listen</button>';
+ if(q.show)h+='<div class="pbox plain">'+q.show+'</div>';
+ var P=q.p?'<div class="pbox" id="p'+i+'">'+esc(q.p)+'</div><button data-a="copy" data-i="'+i+'">📋 Copy prompt</button><a class="lnk" href="https://chatgpt.com" target="_blank" rel="noopener">Open ChatGPT ↗</a>':'';
+ var Fl=q.f?fld(q,i,dn):'<div>'+q.c.map(function(x,j){var k=S.c[i]&&S.c[i][j];return'<label><input type="checkbox" data-a="chk" data-i="'+i+'" data-j="'+j+'"'+(k||dn?' checked':'')+(dn?' disabled':'')+'> '+esc(x)+'</label>'}).join('')+'</div>';
+ h+=q.pa?Fl+P:P+Fl;
+ if(!dn){h+='<div>'+(q.f?'<button data-a="ans" data-i="'+i+'">🔓 Check my answer</button>':'<button data-a="done" data-i="'+i+'" id="b'+i+'"'+(S.c[i]&&S.c[i].filter(Boolean).length===q.c.length?'':' disabled')+'>🎉 Finish!</button>')+'<button class="alt" data-a="hint" data-i="'+i+'">💡 Stuck?</button><div id="m'+i+'"></div></div><div class="hint" id="h'+i+'">'+esc(q.h)+'<div style="margin-top:6px">'+q.j+'</div></div>'}
+ if(fin&&dn)h+='<div class="badge">🏆 Smart AI User!<br><small>Show your teacher!</small></div>';
+ return h+'</div>';
+}
+function vo(){var s=document.getElementById("vs");if(!s||!window.speechSynthesis)return;var V=speechSynthesis.getVoices().filter(function(v){return /^en/i.test(v.lang)});if(!V.length)return;
+ var pr=/Samantha|Google US English|Aria|Jenny|Google UK English Female|Karen|Moira|Zira|Daniel/i;
+ if(!VN)VN=(V.filter(function(v){return pr.test(v.name)})[0]||V[0]).name;
+ s.innerHTML=V.map(function(v){return'<option'+(v.name===VN?' selected':'')+'>'+esc(v.name)+'</option>'}).join('')}
+function render(){
+ var a=Q.concat([F]);
+ document.getElementById("app").innerHTML=a.map(function(q,i){return card(q,i,i===Q.length)}).join('');
+ var n=S.d.filter(Boolean).length;
+ document.getElementById("bar").style.width=(n/a.length*100)+"%";
+ vo();
+}
+function mic(i,j,b){var R=window.SpeechRecognition||window.webkitSpeechRecognition,o=document.getElementById("rf"+i+"_"+j),inp=document.getElementById("f"+i+"_"+j);
+ if(!R){o.textContent=" This device cannot listen. Type what you said.";return}
+ try{var r=new R();r.lang="en-US";r.maxAlternatives=1;b.textContent="🎤 Listening...";
+  r.onresult=function(e){var t=e.results[0][0].transcript;inp.value=t;var w=sc(Q[i].f[j].say,t);o.textContent=" Match: "+w+"% "+(w===100?"✅":"Try again!")};
+  r.onerror=function(e){o.textContent=" Microphone problem ("+(e.error||"error")+"). Check the microphone, or type what you said."};
+  r.onend=function(){b.textContent="🎤 Speak"};
+  r.start()}catch(e){o.textContent=" Could not start the microphone. Type what you said."}}
+document.addEventListener("change",function(ev){if(ev.target.id==="vs")VN=ev.target.value});
+document.addEventListener("input",function(ev){var t=ev.target;if(t.getAttribute&&t.getAttribute("data-say")==="1"){var i=+t.getAttribute("data-i"),j=+t.getAttribute("data-j"),w=sc(Q[i].f[j].say,t.value),o=document.getElementById("rf"+i+"_"+j);if(o)o.textContent=" Match: "+w+"% "+(w===100?"✅":"Try again!")}});
+document.addEventListener("click",function(ev){
+ var t=ev.target,a=t.getAttribute&&t.getAttribute("data-a"),i=+t.getAttribute("data-i"),j=+t.getAttribute("data-j");
+ if(!a)return;
+ if(a==="chk"){S.c[i]=S.c[i]||[];S.c[i][j]=t.checked;save();
+  var q=i<Q.length?Q[i]:F,ok=S.c[i].filter(Boolean).length===q.c.length,b=document.getElementById("b"+i);if(b)b.disabled=!ok}
+ else if(a==="done"){S.d[i]=true;save();render();
+  var e=document.querySelectorAll(".card")[Math.min(i+1,Q.length)];if(e&&e.scrollIntoView)e.scrollIntoView({behavior:"smooth"})}
+ else if(a==="ans"){var q=Q[i],vs=q.f.map(function(f,j){return(document.getElementById("f"+i+"_"+j).value||"").trim()}),ok=q.f.every(function(f,j){return f.ok(vs[j])});
+  if(ok){S.v=S.v||[];S.v[i]=vs;S.d[i]=true;save();render();var e=document.querySelectorAll(".card")[i+1];if(e&&e.scrollIntoView)e.scrollIntoView({behavior:"smooth"})}
+  else{var bad=q.f.filter(function(f,j){return!f.ok(vs[j])}).map(function(f){return f.l});document.getElementById("m"+i).innerHTML='<div class="hint show">Not yet! Check: '+esc(bad.join(" / "))+'<br>Press 💡 Stuck? for help.</div>'}}
+ else if(a==="hint"){document.getElementById("h"+i).classList.toggle("show")}
+ else if(a==="mic"){mic(i,j,t)}
+ else if(a==="say"){try{speechSynthesis.cancel();var nm=document.getElementById("vs").value,u=new SpeechSynthesisUtterance(TXT);u.lang="en-US";u.rate=.9;u.pitch=1;speechSynthesis.getVoices().forEach(function(v){if(v.name===nm)u.voice=v});speechSynthesis.speak(u)}catch(e){}}
+ else if(a==="copy"){var q2=Q[i],x=q2.dyn?q2.dyn(i):q2.p;
+  if(q2.dyn)document.getElementById("p"+i).textContent=x;
+  var ok2=function(){t.textContent="✅ Copied!";setTimeout(function(){t.textContent="📋 Copy prompt"},1500)};
+  try{navigator.clipboard.writeText(x).then(ok2,function(){sel(i)})}catch(e){sel(i)}}
+});
+function sel(i){try{var r=document.createRange();r.selectNodeContents(document.getElementById("p"+i));var s=getSelection();s.removeAllRanges();s.addRange(r)}catch(e){}}
+try{speechSynthesis.onvoiceschanged=vo}catch(e){}
+render();
+</script>
+</body>
+</html>
